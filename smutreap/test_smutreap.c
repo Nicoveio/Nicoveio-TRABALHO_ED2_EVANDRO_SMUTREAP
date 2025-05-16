@@ -3,6 +3,8 @@
 #include <math.h>
 #include <time.h>
 #include "smutreap.h"
+
+//AS ESTRUTURAS FORAM COLOCADAS NA MAIN AFIM DE TESTES
 typedef struct boundingBox{
     double x1, x2, y1, y2;
 }boundingBox;
@@ -24,6 +26,8 @@ typedef struct SmuTreapImp{
     double epsilon;
 
 }SmuTreapImp;
+
+//AS ESTRUTURAS FORAM COLOCADAS NA MAIN AFIM DE TESTES
 
 // Inclua aqui os headers e structs necessários
 void exportaBoundingBoxesSVG(NodeST* no, FILE* svg, int isRaiz) {
