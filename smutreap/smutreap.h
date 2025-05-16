@@ -1,9 +1,9 @@
-
 #ifndef _SMUTREAP_H__
 #define _SMUTREAP_H__
 
 #include <stdbool.h>
 #include "lista.h"
+#include "pilha.h"
 
 /*
  * Uma SmuTreap e' uma treap espacial com promocao dinamica de nos mais

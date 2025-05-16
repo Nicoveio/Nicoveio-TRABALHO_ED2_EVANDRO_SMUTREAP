@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
  
 typedef struct boundingBox{
 	double x1, x2, y1, y2;
@@ -34,6 +35,11 @@ void atualizaBoundingBox(NodeST* node);
 NodeST* promoteNodeSmuTAux(NodeST* raiz, NodeST* n, double epsilon);
 Node getNodeSmuTAux(NodeST*raiz, SmuTreapImp*t, double x, double y);
 NodeST* removeNoSmuTAux(NodeST*raiz, NodeST*no, double epsilon);
+bool intersecta(boundingBox* bb, double x1, double y1, double x2, double y2);
+void buscaNosDentro(NodeST* no, double x1, double y1, double x2, double y2, Lista L, bool* encontrou);
+bool buscaInfosDentro(NodeST* no, SmuTreap t, double x1, double y1, double x2, double y2,
+                      FdentroDeRegiao f, Lista L);
+bool atingidosAux(SmuTreapImp* t, NodeST* no, double x, double y, FpontoInternoAInfo f, Lista L, bool* encontrou);
 
 
 SmuTreap newSmuTreap(int hitCount, double promotionRate, double epsilon){
@@ -203,6 +209,8 @@ Node getNodeSmuTAux(NodeST*raiz, SmuTreapImp*t, double x, double y){
 }
 
 DescritorTipoInfo getTypeInfoSrbT(SmuTreap t, Node n) {
+    double promotionRate = ((SmuTreapImp*)t)->promotionRate;
+    promoteNodeSmuT(t, n, promotionRate);
     NodeST* no = (NodeST*)n;
     return no->descritor;
 }
@@ -269,6 +277,8 @@ NodeST* removeNoSmuTAux(NodeST*raiz, NodeST*no, double epsilon){
 }
 
 Info getInfoSmuT(SmuTreap t, Node n){
+    double promotionRate = ((SmuTreapImp*)t)->promotionRate;
+    promoteNodeSmuT(t, n, promotionRate);
     return ((NodeST*)n)->info;
 }
 
@@ -284,3 +294,178 @@ Info getBoundingBoxSmuT(SmuTreap t, Node n, double *x, double *y, double *w, dou
 }
 
 
+bool getNodesDentroRegiaoSmuT(SmuTreap t, double x1, double y1, double x2, double y2, Lista L) {
+    if (!t) return false;
+    
+    SmuTreapImp* arvore = (SmuTreapImp*)t;
+    NodeST* raiz = arvore->raiz;
+
+    bool encontrou = false;
+    buscaNosDentro(raiz, x1, y1, x2, y2, L, &encontrou);
+    return encontrou;
+}
+
+void buscaNosDentro(SmuTreap t, NodeST* no, double x1, double y1, double x2, double y2, Lista L, bool* encontrou) {
+    if (!no) return;
+
+    if (!intersecta(no->bb, x1, y1, x2, y2)) {
+        return; 
+    }
+
+    if (no->x >= x1 && no->x <= x2 && no->y >= y1 && no->y <= y2) {
+    double promotionRate = ((SmuTreapImp*)t)->promotionRate;
+    promoteNodeSmuT(t, (Node)no, promotionRate);
+        lista_insere(L, (Elemento) no);
+        *encontrou = true;
+    }
+
+    buscaNosDentro(t, no->esq, x1, y1, x2, y2, L, encontrou);
+    buscaNosDentro(t, no->dir, x1, y1, x2, y2, L, encontrou);
+}
+
+bool intersecta(boundingBox* bb, double x1, double y1, double x2, double y2) {
+    return !(bb->x2 < x1 || bb->x1 > x2 || bb->y2 < y1 || bb->y1 > y2);
+}
+
+bool getInfosDentroRegiaoSmuT(SmuTreap t, double x1, double y1, double x2, double y2,
+                              FdentroDeRegiao f, Lista L) {
+    SmuTreapImp* arv = (SmuTreapImp*) t;
+    return buscaInfosDentro(arv->raiz, t, x1, y1, x2, y2, f, L);
+
+}
+bool buscaInfosDentro(Smutreap t, NodeST* no, SmuTreap t, double x1, double y1, double x2, double y2,
+                      FdentroDeRegiao f, Lista L) {
+    if (!no) return false;
+
+    bool achou = false;
+
+    if (intersecta(no->bb, x1, y1, x2, y2)) {
+
+        if (f(t, no, no->info, x1, y1, x2, y2)) {
+            double promotionRate = ((SmuTreapImp*)t)->promotionRate;
+            promoteNodeSmuT(t, no, promotionRate);
+            lista_insere(L, (Elemento)no->info);
+            achou = true;
+        }
+
+   
+        bool achou_esq = buscaInfosDentro(t, no->esq, t, x1, y1, x2, y2, f, L);
+        bool achou_dir = buscaInfosDentro(t, no->dir, t, x1, y1, x2, y2, f, L);
+
+        return achou || achou_esq || achou_dir;
+    }
+
+    
+    return false;
+}
+
+
+bool getInfosAtingidoPontoSmuT(SmuTreap t, double x, double y, FpontoInternoAInfo f, Lista L) {
+    if (t == NULL || L == NULL) return false;
+
+    SmuTreapImp* treap = (SmuTreapImp*)t;
+
+
+    bool encontrou = false;
+
+    atingidosAux(treap, treap->raiz, x, y, f, L, &encontrou);
+
+    return encontrou;
+}
+
+bool atingidosAux(SmuTreapImp* t, NodeST* no, double x, double y, FpontoInternoAInfo f, Lista L, bool* encontrou) {
+    if (no == NULL) return false;
+
+
+    if (x < no->bb->x1 || x > no->bb->x2 || y < no->bb->y1 || y > no->bb->y2) {
+        return false;
+    }
+
+ 
+    if (f((SmuTreap)t, (Node)no, no->info, x, y)) {
+        double promotionRate = ((SmuTreapImp*)t)->promotionRate;
+        promoteNodeSmuT(t, no, promotionRate);
+        lista_insere(L, (Elemento)no); 
+        *encontrou = true;
+    }
+
+
+    atingidosAux(t, no->esq, x, y, f, L, encontrou);
+    atingidosAux(t, no->dir, x, y, f, L, encontrou);
+
+    return *encontrou;
+}
+
+void visitaProfundidadeAux(SmuTreap t, NodeST* no, FvisitaNo f, void* aux) {
+    if (!no) return;
+
+    f(t, (Node)no, no->info, no->x, no->y, aux);
+    visitaProfundidadeAux(t, no->esq, f, aux);
+    visitaProfundidadeAux(t, no->dir, f, aux);
+}
+
+void visitaProfundidadeSmuT(SmuTreap t, FvisitaNo f, void *aux) {
+    if (!t || !f) return;
+
+    NodeST* raiz = ((SmuTreapImp*)t)->raiz;
+    visitaProfundidadeAux(t, raiz, f, aux);
+}
+
+void visitaLarguraSmuT(SmuTreap t, FvisitaNo f, void *aux) {
+    if (!t || !f) return;
+
+    // Criando a fila
+    Pilha fila = pilha_cria();
+    if (!fila) return;  
+
+    
+    NodeST* raiz = ((SmuTreapImp*)t)->raiz;
+    if (raiz == NULL) {
+        pilha_libera(fila);  
+        return;
+    }
+
+    
+    pilha_empilha(fila, (Elemento)raiz);
+
+    while (!pilha_vazia(fila)) {
+        
+        NodeST* noAtual = (NodeST*)pilha_desempilha(fila);
+        
+        f(t, (Node)noAtual, noAtual->info, noAtual->x, noAtual->y, aux);
+
+        
+        if (noAtual->esq) pilha_empilha(fila, (Elemento)noAtual->esq);
+        if (noAtual->dir) pilha_empilha(fila, (Elemento)noAtual->dir);
+    }
+
+    
+    pilha_libera(fila);
+}
+Node procuraNoSmuT(SmuTreap t, FsearchNo f, void *aux) {
+    SmuTreapImp* arvore = (SmuTreapImp*)t;
+    return procuraNoSmuTAux(arvore->raiz, arvore, f, aux);
+}
+Node procuraNoSmuTAux(NodeST* raiz, SmuTreapImp* arvore, FsearchNo f, void *aux) {
+    if (raiz == NULL) {
+        return NULL;  
+    }
+
+    
+    if (f((SmuTreap)arvore, (Node)raiz, raiz->info, raiz->x, raiz->y, aux)) {
+        
+        promoteNodeSmuT((SmuTreap)arvore, (Node)raiz, arvore->promotionRate);
+        return (Node)raiz;
+    }
+
+    ta
+    Node resultado = NULL;
+    if (raiz->x > arvore->epsilon) {
+        resultado = procuraNoSmuTAux(raiz->esq, arvore, f, aux);
+    }
+    if (resultado == NULL && raiz->x <= arvore->epsilon) {
+        resultado = procuraNoSmuTAux(raiz->dir, arvore, f, aux);
+    }
+
+    return resultado;
+}

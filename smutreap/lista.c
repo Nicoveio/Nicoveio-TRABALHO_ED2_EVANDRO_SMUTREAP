@@ -1,16 +1,16 @@
 #include "lista.h"
 #include <stdlib.h>
 
-// Estrutura do nó
+
 typedef struct no {
     Elemento dado;
     struct no* prox;
 } No;
 
-// Estrutura da lista (agora compatível com o .h)
+
 struct lista {
     No* primeiro;
-    int tamanho;  // Manteremos oculto
+    int tamanho;  
 };
 
 Lista lista_cria() {
@@ -64,3 +64,4 @@ void lista_percorre(Lista lista, void (*func)(Elemento)) {
         func(atual->dado);
     }
 }
+
